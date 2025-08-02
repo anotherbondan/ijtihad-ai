@@ -24,6 +24,16 @@ python -m venv env
 pip install fastapi uvicorn jinja2 python-multipart scikit-learn joblib
 ```
 
+5. Run app 
+```bash
+uvicorn main:app --reload
+```
+
+6. Open in browser (add /docs to see API docs)
+```bash
+http://127.0.0.1:8000
+```
+
 5. Make changes, add and commit as usual, then push the branch
 ```bash
 git add .

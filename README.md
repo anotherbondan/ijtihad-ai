@@ -1,11 +1,16 @@
-1. Clone repository
+1. Clone repository (On terminal)
 ``` bash
 git clone https://github.com/anotherbondan/ijtihad-ai.git
 ```
 
-2. Create new branch (ex. ChatbotAPI)
+2. Create new branch on root directory (ex. ChatbotAPI)
 ```bash
 git checkout -b ChatbotAPI
+```
+
+3. Pull any latest changes in dev
+```bash
+git pull origin dev
 ```
 
 3. Create virtual environment

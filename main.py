@@ -14,3 +14,7 @@ async def read_home_page(request: Request):
 @app.get("/chatbot", response_class=HTMLResponse)
 async def read_chatbot_page(request: Request):
     return templates.TemplateResponse("Chatbot/index.html", {"request": request})
+
+@app.get("/halal-checker", response_class=HTMLResponse)
+async def read_halal_checker_page(request: Request):
+    return templates.TemplateResponse("HalalChecker/index.html", {"request": request})

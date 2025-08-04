@@ -55,7 +55,7 @@
         <el-popover-group class="hidden lg:flex lg:gap-x-16">
           <a
             href="halal-checker"
-            class="text-xl font-semibold {% if request.path == '/halal-checker' %}text-[#C6934B]{% else %}text-black{% endif %}"
+            class="text-xl font-semibold {% if request.path == '/halal-checker' or request.path == '/halal-checker/result' %}text-[#C6934B]{% else %}text-black{% endif %}"
             >Halal/Haram Checker</a
           >
           <a

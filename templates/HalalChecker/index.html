@@ -1,11 +1,15 @@
 {% extends "base.html" %} {% block content %}
-<div class="flex flex-col gap-10 mx-auto max-w-screen px-20">
+<div class="flex flex-col gap-10 mx-auto max-w-screen px-16 max-lg:px-10">
+  <img src="/static/assets/halal-left.svg" alt="bg" class="absolute top-0 left-0 -z-10 max-lg:hidden">
+  <img src="/static/assets/halal-right.svg" alt="bg" class="absolute -bottom-1/2 right-0 -z-10 max-lg:hidden">
   <h1
-    class="self-stretch text-center justify-start text-black text-6xl font-semibold lg:hidden"
+    class="self-stretch text-center justify-start text-black text-2xl font-semibold lg:hidden"
   >
     Halal/Haram Checker
   </h1>
-  <p class="w-full text-center justify-start text-black text-xl font-medium lg:hidden">
+  <p
+    class="w-full text-center justify-start text-black text-xl font-medium lg:hidden"
+  >
     Ijtihad adalah Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed
     do
   </p>
@@ -13,7 +17,7 @@
     <div
       class="w-1/2 max-lg:w-full inline-flex flex-col justify-between items-center gap-10"
     >
-      <div class="w-80 h-80 bg-zinc-300 rounded-full"></div>
+      <div class="max-lg:w-65 max-lg:h-65 w-80 h-80 bg-zinc-300 rounded-full"></div>
       <div class="self-stretch flex flex-col justify-start items-start gap-7">
         <div
           class="self-stretch justify-start text-black text-3xl font-semibold"
@@ -25,52 +29,52 @@
             class="self-stretch h-14 px-3 rounded-lg outline outline-2 outline-offset-[-2px] outline-black inline-flex justify-between items-center"
           >
             <div
-              class="text-center justify-start text-black text-2xl font-semibold"
+              class="text-center justify-start text-black text-2xl max-lg:text-lg font-semibold"
             >
               Nama Produk
             </div>
             <div
-              class="text-center justify-start text-black text-3xl font-semibold"
+              class="text-center justify-start text-black text-2xl max-lg:text-lg font-semibold"
             >
-              HALAL
+              Terdaftar
             </div>
           </div>
           <div
             class="self-stretch h-14 px-3 rounded-lg outline outline-2 outline-offset-[-2px] outline-black inline-flex justify-between items-center"
           >
             <div
-              class="text-center justify-start text-black text-2xl font-semibold"
+              class="text-center justify-start text-black text-2xl max-lg:text-lg font-semibold"
             >
               Nama Produk
             </div>
             <div
-              class="text-center justify-start text-black text-3xl font-semibold"
+              class="text-center justify-start text-black text-2xl max-lg:text-lg font-semibold"
             >
-              HALAL
+              Tidak Terdaftar
             </div>
           </div>
           <div
             class="self-stretch h-14 px-3 rounded-lg outline outline-2 outline-offset-[-2px] outline-black inline-flex justify-between items-center"
           >
             <div
-              class="text-center justify-start text-black text-2xl font-semibold"
+              class="text-center justify-start text-black text-2xl max-lg:text-lg font-semibold"
             >
               Nama Produk
             </div>
             <div
-              class="text-center justify-start text-black text-3xl font-semibold"
+              class="text-center justify-start text-black text-2xl max-lg:text-lg font-semibold"
             >
-              HALAL
+              Terdaftar
             </div>
           </div>
         </div>
       </div>
     </div>
     <div
-      class="w-1/2 max-lg:w-full flex flex-col justify-between items-center gap-14"
+      class="w-1/2 max-lg:w-full flex flex-col justify-evenly max-lg:gap-10 items-center"
     >
       <h1
-        class="self-stretch text-center justify-start text-black text-6xl font-semibold max-lg:hidden"
+        class="self-stretch text-center justify-start text-black text-5xl font-semibold max-lg:hidden"
       >
         Halal/Haram Checker
       </h1>
@@ -81,7 +85,7 @@
         sed do
       </p>
       <div
-        class="w-full h-14 pl-3 pr-2.5 py-2.5 rounded-lg outline outline-2 outline-offset-[-2px] outline-black inline-flex justify-start items-center gap-2.5"
+        class="w-3/4 max-lg:w-full h-14 pl-3 pr-2.5 py-2.5 rounded-lg outline outline-2 outline-offset-[-2px] outline-black inline-flex justify-start items-center gap-2.5"
       >
         <input
           type="text"
@@ -90,23 +94,16 @@
         />
       </div>
       <div
-        class="w-full h-48 outline-2 outline-offset-[-2px] outline-black outline-dashed flex flex-col justify-center items-center gap-7"
+        class="w-40 h-14 rounded-lg inline-flex justify-center items-center gap-5"
       >
-        <img src="/static/assets/file.svg" alt="icon" class="h-12 w-auto" />
-        <div
-          class="self-stretch text-center justify-start text-black text-2xl font-semibold"
-        >
-          Drop file here
-        </div>
-      </div>
-      <div
-        class="w-40 h-14 rounded-lg outline outline-1 outline-offset-[-1px] outline-black inline-flex justify-center items-center gap-5"
-      >
-        <button
-          class="flex justify-start text-black text-3xl font-semibold px-4 py-2 hover:bg-gray-100 rounded"
-        >
-          Check
-        </button>
+        <a href="/halal-checker">
+          <button
+            type="button"
+            class="flex items-center gap-5 px-14 py-2 rounded-md bg-[#72d3bd] active:bg-[#1a6e6a] hover:cursor-pointer"
+          >
+            <span class="font-semibold text-2xl">Check</span>
+          </button>
+        </a>
       </div>
     </div>
   </div>

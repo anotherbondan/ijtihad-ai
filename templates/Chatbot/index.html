@@ -1,13 +1,157 @@
-{% extends "base.html" %}
+{% extends "base.html" %} {% block content %}
+<main>
+  <div class="flex min-h-[85vh]">
+    <aside
+      id="sidebar"
+      class="w-64 min-h-full p-4 flex flex-col bg-white transition-all duration-300 ease-in-out relative z-10"
+      style="box-shadow: 4px 0 8px rgba(0, 0, 0, 0.1)"
+    >
+      <nav class="flex-grow overflow-y-auto space-y-2">
+        <a
+          href="#"
+          class="flex items-center justify-center p-[1px] rounded-lg bg-gradient-to-r from-[#0D464F] via-[#1A6E6A] to-[#E7B767]"
+        >
+          <div class="flex w-full bg-white hover:bg-gray-100 p-3 rounded-lg">
+            <span class="sidebar-text">Pengenalan HTML & CSS</span>
+          </div>
+        </a>
+        <a
+          href="#"
+          class="flex items-center justify-center p-[1px] rounded-lg bg-gradient-to-r from-[#0D464F] via-[#1A6E6A] to-[#E7B767]"
+        >
+          <div class="flex w-full bg-white hover:bg-gray-100 p-3 rounded-lg">
+            <span class="sidebar-text">Pengenalan HTML & CSS</span>
+          </div>
+        </a>
+      </nav>
+      <button
+        class="flex items-center justify-center w-full bg-[#72d3bd] active:bg-[#1a6e6a] rounded-lg px-3 py-2 mb-4 transition-colors"
+      >
+        <span class="sidebar-text text-center">New Chat</span>
+      </button>
+    </aside>
 
-{% block title %}Klasifikasi Teks{% endblock %}
+    <main class="flex-1 flex flex-col bg-transparent max-h-[90vh]">
+      <header class="flex relative z-20 items-center px-0 py-4 bg-transparent">
+        <button
+          id="sidebar-toggle"
+          class="py-[1px] pr-[1px] rounded-r-md bg-gradient-to-r from-[#0D464F] via-[#1A6E6A] to-[#E7B767]"
+        >
+          <div class="bg-white w-full h-full rounded-r-md p-2">
+            <img
+              src="/static/assets/list.svg"
+              alt="button"
+              class="w-6 h-auto"
+            />
+          </div>
+        </button>
+      </header>
 
-{% block content %}
-  <h1 class="mb-4">Klasifikasi Teks</h1>
-  <form method="post" action="/classify">
-    <div class="mb-3">
-      <textarea name="text" class="form-control" rows="4" placeholder="Masukkan teks..."></textarea>
-    </div>
-    <button class="btn btn-primary">Klasifikasi</button>
-  </form>
+      <div id="chat-container" class="flex-1 p-14 overflow-y-auto">
+        <div class="space-y-6"></div>
+      </div>
+
+      <div class="px-14 py-2 bg-white">
+        <div class="w-full mx-auto">
+          <form id="chat-form" class="relative">
+            <input
+              type="text"
+              id="user-input"
+              placeholder="Ketik pesan Anda di sini..."
+              autocomplete="off"
+              class="w-full py-4 pl-6 pr-16 bg-gray-100 border-2 border-black rounded-lg focus:outline-none focus:ring-2 focus:ring-[#D1F7E8] focus:border-transparent transition"
+            />
+
+            <button
+              type="submit"
+              class="absolute right-3 top-1/2 -translate-y-1/2 p-3 text-black rounded-full focus:outline-none transition-colors"
+            >
+              <svg
+                xmlns="http://www.w3.org/2000/svg"
+                class="h-6 w-6"
+                viewBox="0 0 24 24"
+                fill="currentColor"
+              >
+                <path d="M2.01 21L23 12 2.01 3 2 10l15 2-15 2z" />
+              </svg>
+            </button>
+          </form>
+        </div>
+      </div>
+    </main>
+  </div>
+
+  <script>
+    const sidebar = document.getElementById("sidebar");
+    const sidebarToggle = document.getElementById("sidebar-toggle");
+    const sidebarTexts = document.querySelectorAll(".sidebar-text");
+
+    const chatContainer = document.getElementById("chat-container");
+    const chatForm = document.getElementById("chat-form");
+    const userInput = document.getElementById("user-input");
+
+    // --- LOGIKA TOGGLE SIDEBAR ---
+    sidebarToggle.addEventListener("click", () => {
+      // Toggle lebar sidebar
+      sidebar.classList.toggle("w-64");
+      sidebar.classList.toggle("hidden");
+
+      // Toggle visibilitas teks di sidebar
+      sidebarTexts.forEach((text) => {
+        text.classList.toggle("hidden");
+      });
+    });
+
+    // --- LOGIKA CHAT ---
+    function addMessage(message, sender) {
+      const messageWrapper = document.createElement("div");
+      let messageHTML = "";
+
+      if (sender === "user") {
+        messageHTML = `
+                    <div class="flex flex-row-reverse items-start gap-3">
+                        <div class="bg-[#D1F7E8] text-white p-4 rounded-3xl rounded-br-lg">
+                            <p>${message}</p>
+                        </div>
+                    </div>
+                `;
+      } else {
+        // sender === 'bot'
+        messageHTML = `
+                     <div class="flex items-start gap-3">
+                        <div class="bg-gray-100 text-gray-800 p-4 rounded-3xl rounded-bl-lg">
+                             <p>${message}</p>
+                        </div>
+                    </div>
+                `;
+      }
+
+      messageWrapper.innerHTML = messageHTML;
+      chatContainer.querySelector(".space-y-6").appendChild(messageWrapper);
+      chatContainer.scrollTop = chatContainer.scrollHeight;
+    }
+
+    // Tampilkan pesan awal dari bot
+    window.addEventListener("load", () => {
+      addMessage(
+        "Halo! Saya adalah asisten AI yang siap membantu Anda. Tanyakan apa saja!",
+        "bot"
+      );
+    });
+
+    chatForm.addEventListener("submit", (e) => {
+      e.preventDefault();
+      const userMessage = userInput.value.trim();
+      if (userMessage) {
+        addMessage(userMessage, "user");
+        userInput.value = "";
+        // Simulasikan respons bot
+        setTimeout(() => {
+          const botResponse = `Ini adalah respons otomatis untuk: "${userMessage}". Dalam aplikasi nyata, ini akan datang dari AI.`;
+          addMessage(botResponse, "bot");
+        }, 1200);
+      }
+    });
+  </script>
+</main>
 {% endblock %}

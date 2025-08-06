@@ -3,26 +3,27 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Ijtihad AI</title>
+    <title>Ijtihad</title>
     <link rel="stylesheet" href="/static/style.css" />
     <script src="https://cdn.tailwindcss.com"></script>
   </head>
-  <body class="">
-    <header class="bg-white shadow-md">
+  <body>
+    <header class="bg-white shadow-md z-50 relative">
       <nav
         aria-label="Global"
-        class="mx-auto flex max-w-7xl items-center justify-between px-6 py-2"
+        class="mx-auto flex max-w-7xl items-center justify-between px-6 py-4"
       >
         <div class="flex lg:flex-1">
-          <a href="#" class="-m-1.5 p-1.5">
-            <span class="sr-only">Ijtihad AI</span>
-            <div class="flex items-center">
-              <img
-                src="/static/assets/logo.svg"
-                alt="logo"
-                class="h-16 max-lg:h-12 w-auto"
-              />
-              <h1 class="max-lg:text-2xl text-4xl font-bold">Ijtihad AI</h1>
+          <a href="/" class="-m-1.5 p-1.5">
+            <span class="sr-only">Ijtihad</span>
+            <div
+              class="flex items-center bg-gradient-to-r from-[#0D464F] via-[#1A6E6A] to-[#E7B767] bg-clip-text"
+            >
+              <h1
+                class="max-lg:text-2xl text-4xl font-semibold text-transparent"
+              >
+                Ijtihad
+              </h1>
             </div>
           </a>
         </div>
@@ -31,7 +32,7 @@
             type="button"
             command="show-modal"
             commandfor="mobile-menu"
-            class="-m-2.5 inline-flex items-center justify-center rounded-md p-2.5 text-gray-700"
+            class="-m-2.5 inline-flex items-center justify-center rounded-md p-2.5"
           >
             <span class="sr-only">Open main menu</span>
             <svg
@@ -51,18 +52,44 @@
             </svg>
           </button>
         </div>
-        <el-popover-group class="hidden lg:flex lg:gap-x-12">
-          <a href="#" class="text-sm/6 font-semibold text-gray-900"
+        <el-popover-group class="hidden lg:flex lg:gap-x-16">
+          <a
+            href="halal-checker"
+            class="text-xl font-semibold {% if request.path == '/halal-checker' or request.path == '/halal-checker/result' %}text-[#C6934B]{% else %}text-black{% endif %}"
+            >Halal/Haram Checker</a
+          >
+          <a
+            href="/chatbot"
+            class="text-xl font-semibold {% if request.path == '/chatbot' %}text-[#C6934B]{% else %}text-black{% endif %}"
             >Syariah Chatbot</a
           >
-          <a href="#" class="text-sm/6 font-semibold text-gray-900"
-            >Halal/Haram Checker</a
+          <a
+            href="/contract-checker"
+            class="text-xl font-semibold {% if request.path == '/contract-checker' %}text-[#C6934B]{% else %}text-black{% endif %}"
+            >Contract Checker</a
           >
         </el-popover-group>
         <div class="hidden lg:flex lg:flex-1 lg:justify-end">
-          <a href="#" class="text-sm/6 font-semibold text-gray-900"
-            ><img src="/static/assets/user.svg" alt="icon" class="w-9"
-          /></a>
+          <a href="/dashboard" class="text-sm/6 font-semibold">
+            <svg
+              width="39"
+              height="50"
+              viewBox="0 0 39 50"
+              fill="none"
+              xmlns="http://www.w3.org/2000/svg"
+            >
+              <path
+                d="M2 42.7787C2 36.746 6.24331 31.6074 12.0101 30.6566L12.5295 30.571C17.1473 29.8097 21.8527 29.8097 26.4704 30.571L26.9899 30.6566C32.7567 31.6074 37 36.746 37 42.7787C37 45.3862 34.9538 47.5 32.4297 47.5H6.57032C4.0462 47.5 2 45.3862 2 42.7787Z"
+                stroke="{% if request.path == '/profile' %}#C6934B{% else %}black{% endif %}"
+                stroke-width="3.75"
+              />
+              <path
+                d="M29.7084 12.3438C29.7084 17.7803 25.138 22.1875 19.5001 22.1875C13.8621 22.1875 9.29172 17.7803 9.29172 12.3438C9.29172 6.9072 13.8621 2.5 19.5001 2.5C25.138 2.5 29.7084 6.9072 29.7084 12.3438Z"
+                stroke="{% if request.path == '/profile' %}#C6934B{% else %}black{% endif %}"
+                stroke-width="3.75"
+              />
+            </svg>
+          </a>
         </div>
       </nav>
       <el-dialog>
@@ -72,19 +99,19 @@
               class="fixed inset-y-0 right-0 z-50 w-full overflow-y-auto bg-white p-6 sm:max-w-sm sm:ring-1 sm:ring-gray-900/10"
             >
               <div class="flex items-center justify-between">
-                <a href="#" class="-m-1.5 p-1.5">
+                <a href="/" class="-m-1.5 p-1.5">
                   <span class="sr-only">Your Company</span>
                   <img
                     src="/static/assets/logo.svg"
-                    alt=""
-                    class="h-8 w-auto"
+                    alt="icon"
+                    class="w-10 h-auto"
                   />
                 </a>
                 <button
                   type="button"
                   command="close"
                   commandfor="mobile-menu"
-                  class="-m-2.5 rounded-md p-2.5 text-gray-700"
+                  class="-m-2.5 rounded-md p-2.5"
                 >
                   <span class="sr-only">Close menu</span>
                   <svg
@@ -106,25 +133,46 @@
               </div>
               <div class="mt-6 flow-root">
                 <div class="-my-6 divide-y divide-gray-500/10">
-                  <div class="space-y-2 py-6">
+                  <div class="space-y-2 py-2">
                     <a
-                      href="#"
-                      class="-mx-3 block rounded-lg px-3 py-2 text-base/7 font-semibold text-gray-900 hover:bg-gray-50"
+                      href="/halal-checker"
+                      class="-mx-3 block rounded-lg px-3 py-2 text-base/7 font-semibold {% if request.path == '/halal-checker' %}text-[#C6934B]{% else %}text-black{% endif %}"
+                      >Halal/Haram Checker</a
+                    >
+                    <a
+                      href="/chatbot"
+                      class="-mx-3 block rounded-lg px-3 py-2 text-base/7 font-semibold {% if request.path == '/chatbot' %}text-[#C6934B]{% else %}text-black{% endif %}"
                       >Syariah Chatbot</a
                     >
                     <a
-                      href="#"
-                      class="-mx-3 block rounded-lg px-3 py-2 text-base/7 font-semibold text-gray-900 hover:bg-gray-50"
-                      >Halal/Haram Checker</a
+                      href="/contract-checker"
+                      class="-mx-3 block rounded-lg px-3 py-2 text-base/7 font-semibold {% if request.path == '/contract-checker' %}text-[#C6934B]{% else %}text-black{% endif %}"
+                      >Contract Checker</a
                     >
                   </div>
-                  <div class="py-6">
+                  <div class="py-2">
                     <a
-                      href="#"
-                      class="-mx-3 block rounded-lg px-3 py-2.5 text-base/7 font-semibold text-gray-900 hover:bg-gray-50"
+                      href="/dashboard"
+                      class="-mx-3 block rounded-lg px-3 py-2.5 text-base/7 font-semibold"
                     >
-                      <img src="/static/assets/user.svg" alt="icon"
-                    /></a>
+                      <svg
+                        width="39"
+                        height="50"
+                        viewBox="0 0 39 50"
+                        fill="none"
+                        xmlns="http://www.w3.org/2000/svg"
+                      >
+                        <path
+                          d="M2 42.7787C2 36.746 6.24331 31.6074 12.0101 30.6566L12.5295 30.571C17.1473 29.8097 21.8527 29.8097 26.4704 30.571L26.9899 30.6566C32.7567 31.6074 37 36.746 37 42.7787C37 45.3862 34.9538 47.5 32.4297 47.5H6.57032C4.0462 47.5 2 45.3862 2 42.7787Z"
+                          stroke="{% if request.path == '/profile' %}#C6934B{% else %}black{% endif %}"
+                          stroke-width="3.75"
+                        />
+                        <path
+                          d="M29.7084 12.3438C29.7084 17.7803 25.138 22.1875 19.5001 22.1875C13.8621 22.1875 9.29172 17.7803 9.29172 12.3438C9.29172 6.9072 13.8621 2.5 19.5001 2.5C25.138 2.5 29.7084 6.9072 29.7084 12.3438Z"
+                          stroke="{% if request.path == '/profile' %}#C6934B{% else %}black{% endif %}"
+                          stroke-width="3.75"
+                        /></svg
+                    ></a>
                   </div>
                 </div>
               </div>
@@ -134,6 +182,6 @@
       </el-dialog>
     </header>
 
-    <main class="py-20 px-4">{% block content %}{% endblock %}</main>
+    {% block content %}{% endblock %}
   </body>
 </html>

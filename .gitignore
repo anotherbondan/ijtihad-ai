@@ -1,1 +1,26 @@
-node_modules
+# Python
+__pycache__/
+*.py[cod]
+*.pyo
+*.pyd
+*.so
+
+# Virtual environment
+env/
+venv/
+ENV/
+.venv/
+
+# dotenv / credentials
+.env
+*.env
+firebase_creds.json
+
+# Ignore all sensitive credentials
+/credentials/
+
+# VSCode settings (optional, if you use VSCode)
+.vscode/
+
+# Jupyter Notebook checkpoints (if any)
+.ipynb_checkpoints/

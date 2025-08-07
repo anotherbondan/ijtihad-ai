@@ -4,7 +4,7 @@ import asyncio
 import time 
 
 try:
-    from kaggle_secrets import UserSecretsClient
+    from kaggle_secrets import UserSecretsClient #type: ignore
     ON_KAGGLE = True
 except ImportError:
     ON_KAGGLE = False
@@ -13,7 +13,7 @@ except ImportError:
 
 try:
     if ON_KAGGLE:
-        user_secrets = UserSecretsClient()
+        user_secrets = UserSecretsClient() #type: ignore
         gemini_api_key = user_secrets.get_secret("GEMINI_API_KEY")
     else:
         gemini_api_key = os.getenv("GEMINI_API_KEY")
@@ -22,7 +22,7 @@ try:
         raise ValueError("GEMINI_API_KEY not found. Ensure 'GEMINI_API_KEY' is set.")
     
     genai.configure(api_key=gemini_api_key)
-    llm_model = genai.GenerativeModel('gemini-2.5-flash')
+    llm_model = genai.GenerativeModel(model_name='gemini-2.5-flash')
     print("Gemini API configured successfully in LLM service.")
 except ValueError as e:
     print(f"Error: {e}")

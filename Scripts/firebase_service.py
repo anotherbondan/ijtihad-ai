@@ -7,7 +7,7 @@ import numpy as np
 from sklearn.metrics.pairwise import cosine_similarity
 
 try:
-    from kaggle_secrets import UserSecretsClient
+    from kaggle_secrets import UserSecretsClient # type: ignore
     ON_KAGGLE = True
 except ImportError:
     ON_KAGGLE = False
@@ -17,10 +17,10 @@ except ImportError:
 
 try:
     if ON_KAGGLE:
-        user_secrets = UserSecretsClient()
+        user_secrets = UserSecretsClient() # type: ignore
         firebase_creds_json = user_secrets.get_secret("Firebase Credentials")
     else:
-        firebase_creds_json = os.getenv("Firebase Credentials")
+        firebase_creds_json = os.getenv("FIREBASE_CREDENTIALS")
     
     if not firebase_creds_json:
         raise ValueError("Firebase credentials not found. Ensure 'Firebase Credentials' is set.")

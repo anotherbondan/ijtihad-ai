@@ -34,7 +34,7 @@ try:
     gemini_api_key = os.getenv("GEMINI_API_KEY")
     if not gemini_api_key:
         raise ValueError("GEMINI_API_KEY not found.")
-    client = genai.Client(api_key="API_KEY_KAMU")
+    client = genai.Client(api_key=gemini_api_key)
     
     firebase_creds_json = os.getenv("FIREBASE_CREDENTIALS")
     if not firebase_creds_json:
@@ -110,7 +110,7 @@ def extract_product_name(text):
     {text}
     """
     try:
-        response = client.models.generate_content(model="gemini-2.5-flash", contents="prompt")
+        response = client.models.generate_content(model="gemini-2.5-flash", contents=prompt)
         return response.text
     except Exception as e:
         print(f"Error during product name extraction with LLM: {e}")
@@ -206,7 +206,7 @@ def summarize_halal_status_with_llm(product_name, bpjph_results):
     """
     
     try:
-        response = client.models.generate_content(model="gemini-2.5-flash", contents="prompt")
+        response = client.models.generate_content(model="gemini-2.5-flash", contents=prompt)
         return {"status": "completed", "result": response.text}
     except Exception as e:
         print(f"LLM summarization failed: {e}")

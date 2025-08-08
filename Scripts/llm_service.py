@@ -1,4 +1,4 @@
-import google.generativeai as genai
+from google import genai
 import os
 import asyncio 
 import time 
@@ -21,17 +21,16 @@ try:
     if not gemini_api_key:
         raise ValueError("GEMINI_API_KEY not found. Ensure 'GEMINI_API_KEY' is set.")
     
-    genai.configure(api_key=gemini_api_key) #type: ignore
-    llm_model = genai.GenerativeModel(model_name='gemini-2.5-flash') #type: ignore
+    client = genai.Client(api_key=gemini_api_key)
     print("Gemini API configured successfully in LLM service.")
 except ValueError as e:
     print(f"Error: {e}")
-    llm_model = None 
+    client = None 
 except Exception as e:
     print(f"Error during Gemini API configuration in LLM service: {e}")
-    llm_model = None 
+    client = None 
 
-async def generate_response_from_context(user_query: str, context_chunks: list) -> str: #type: ignore
+async def generate_response_from_context(user_query: str, context_chunks: list) -> str:
     """
     Generates a response using the Gemini LLM based on the user's query and provided fatwa context.
 
@@ -44,7 +43,7 @@ async def generate_response_from_context(user_query: str, context_chunks: list) 
         str: The AI-generated response.
              Returns a fallback message if the LLM model is not available or an error occurs.
     """
-    if not llm_model:
+    if not client:
         return "Maaf, layanan AI tidak tersedia untuk menghasilkan jawaban."
 
     context_text = "\n\n".join([chunk['text'] for chunk in context_chunks])
@@ -70,8 +69,11 @@ async def generate_response_from_context(user_query: str, context_chunks: list) 
     retries = 3
     for i in range(retries):
         try:
-            response = await llm_model.generate_content(prompt) #type: ignore
-            return response.text
+            response = client.models.generate_content(
+            model="gemini-2.5-flash",
+            contents=prompt
+        )
+            return getattr(response, "text", "") or ""
         except Exception as e:
             print(f"Attempt {i+1} failed to generate LLM response: {e}")
             if i < retries - 1:
@@ -81,3 +83,5 @@ async def generate_response_from_context(user_query: str, context_chunks: list) 
             else:
                 print(f"All retry attempts failed for LLM response generation.")
                 return "Maaf, terjadi kesalahan saat memproses permintaan Anda. Silakan coba lagi nanti."
+    # Ensure a string is always returned
+    return "Maaf, terjadi kesalahan yang tidak terduga saat memproses permintaan Anda."

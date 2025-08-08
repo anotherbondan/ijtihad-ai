@@ -2,6 +2,7 @@ import firebase_admin
 from firebase_admin import credentials, firestore
 from firebase_admin import exceptions as firebase_exceptions
 import json
+import asyncio
 import os
 import numpy as np
 from sklearn.metrics.pairwise import cosine_similarity
@@ -103,7 +104,7 @@ async def save_halal_status(task_id: str, status_data: dict):
     """
     try:
         doc_ref = halal_status_cache.document(task_id)
-        await doc_ref.set(status_data) #type: ignore
+        await asyncio.to_thread(doc_ref.set, status_data)
         return True
     except Exception as e:
         print(f"Error saving halal status to Firestore for task {task_id}: {e}")
@@ -114,11 +115,12 @@ async def get_halal_status_by_id(task_id: str):
     Retrieves the HalalScan result from Firestore cache by task ID.
     """
     try:
-        doc_ref = halal_status_cache.document(task_id)
-        doc = await doc_ref.get() #type: ignore
-        if doc.exists:
-            return doc.to_dict()
-        return None
+        def sync_get():
+            doc_ref = halal_status_cache.document(task_id)
+            doc = doc_ref.get()
+            return doc.to_dict() if doc.exists else None
+
+        return await asyncio.to_thread(sync_get)
     except Exception as e:
         print(f"Error retrieving halal status from Firestore for task {task_id}: {e}")
         return None

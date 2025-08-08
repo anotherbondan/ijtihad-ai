@@ -1,6 +1,6 @@
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
-from api import halalscan
+from api import halalscan, chatbot
 
 app = FastAPI()
 
@@ -13,6 +13,7 @@ app.add_middleware(
 )
 
 app.include_router(halalscan.router, prefix="/halal-scan", tags=["HalalScan"])
+app.include_router(chatbot.router, prefix="/chatbot", tags=["Chatbot"])
 
 @app.get("/")
 def root():

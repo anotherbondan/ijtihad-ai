@@ -12,7 +12,7 @@ class ChatRequest(BaseModel):
 class ChatResponse(BaseModel):
     response: str
 
-@router.post("/chatbot", response_model=ChatResponse)
+@router.post("/", response_model=ChatResponse)
 async def ask_chatbot(request: ChatRequest):
     try:
         user_message = request.message

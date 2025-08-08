@@ -19,3 +19,10 @@ class ChatMessage(Model):
     sender = fields.ForeignKeyField('models.User', null=True, to_field='id')
     message = fields.TextField()
     created_at = fields.DatetimeField(auto_now_add=True)
+    
+class ScannedProduct(Model):
+    id = fields.IntField(pk=True)
+    user = fields.ForeignKeyField("models.User", related_name="scans")
+    product_name = fields.CharField(max_length=100)
+    scanned_at = fields.DatetimeField(auto_now_add=True)
+    status = fields.CharField(max_length=20)

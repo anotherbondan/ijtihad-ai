@@ -2,6 +2,7 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from api import halalscan, chatbot
 from tortoise.contrib.fastapi import register_tortoise
+from db_config import TORTOISE_ORM
 
 app = FastAPI()
 
@@ -15,9 +16,8 @@ app.add_middleware(
 
 register_tortoise(
     app,
-    db_url="postgres://postgres:postgres@localhost:5432/ijtihad",
-    modules={"models": ["app.models"]},  # path ke module model kamu
-    generate_schemas=False,  # jangan auto generate di production
+    config=TORTOISE_ORM,
+    generate_schemas=False, 
     add_exception_handlers=True,
 )
 

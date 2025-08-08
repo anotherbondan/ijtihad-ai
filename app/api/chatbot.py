@@ -1,6 +1,6 @@
-from services.embedding_service import get_query_embedding
-from services.firebase_service import search_fatwa_embeddings
-from services.llm_service import generate_response_from_context
+from app.services.embedding_service import get_query_embedding
+from app.services.firebase_service import search_fatwa_embeddings
+from app.services.llm_service import generate_response_from_context
 from pydantic import BaseModel
 from fastapi import APIRouter, HTTPException
 
@@ -27,4 +27,3 @@ async def ask_chatbot(request: ChatRequest):
 
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
-    

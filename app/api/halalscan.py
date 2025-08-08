@@ -3,8 +3,8 @@ import shutil
 import uuid
 from fastapi import APIRouter, File, UploadFile, HTTPException
 from pydantic import BaseModel, Field
-from tasks.halalscan_tasks import process_halal_scan 
-from services.firebase_service import get_halal_status_by_id
+from app.tasks.halalscan_tasks import process_halal_scan 
+from app.services.firebase_service import get_halal_status_by_id
 from typing import Any
 
 process_halal_scan: Any

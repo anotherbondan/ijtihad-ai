@@ -1,8 +1,8 @@
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
-from api import halalscan, chatbot
+from app.api import halalscan, chatbot
 from tortoise.contrib.fastapi import register_tortoise
-from db_config import TORTOISE_ORM
+from app.db_config import TORTOISE_ORM
 
 app = FastAPI()
 
@@ -25,7 +25,7 @@ app.include_router(halalscan.router, prefix="/halal-scan", tags=["HalalScan"])
 app.include_router(chatbot.router, prefix="/chatbot", tags=["Chatbot"])
 
 @app.get("/")
-def root():
+async def root():
     return {"message": "API is running"}
 
 

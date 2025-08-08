@@ -8,7 +8,7 @@ from sklearn.metrics.pairwise import cosine_similarity
 
 # Import UserSecretsClient only if running on Kaggle
 try:
-    from kaggle_secrets import UserSecretsClient
+    from kaggle_secrets import UserSecretsClient # type: ignore
     ON_KAGGLE = True
 except ImportError:
     ON_KAGGLE = False
@@ -18,7 +18,7 @@ except ImportError:
 # --- Firebase Initialization ---
 try:
     if ON_KAGGLE:
-        user_secrets = UserSecretsClient()
+        user_secrets = UserSecretsClient() #type: ignore
         firebase_creds_json = user_secrets.get_secret("FIREBASE_CREDENTIALS")
     else:
         firebase_creds_json = os.getenv("FIREBASE_CREDENTIALS")
@@ -103,7 +103,7 @@ async def save_halal_status(task_id: str, status_data: dict):
     """
     try:
         doc_ref = halal_status_cache.document(task_id)
-        await doc_ref.set(status_data)
+        await doc_ref.set(status_data) #type: ignore
         return True
     except Exception as e:
         print(f"Error saving halal status to Firestore for task {task_id}: {e}")
@@ -115,7 +115,7 @@ async def get_halal_status_by_id(task_id: str):
     """
     try:
         doc_ref = halal_status_cache.document(task_id)
-        doc = await doc_ref.get()
+        doc = await doc_ref.get() #type: ignore
         if doc.exists:
             return doc.to_dict()
         return None

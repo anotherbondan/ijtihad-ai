@@ -20,7 +20,7 @@ from webdriver_manager.chrome import ChromeDriverManager
 import urllib.parse
 
 # Import Celery and other services
-from celery_app import app
+from app.celery_app import app
 from google.api_core.client_options import ClientOptions
 from google.cloud import documentai_v1 as documentai
 from google.oauth2.service_account import Credentials

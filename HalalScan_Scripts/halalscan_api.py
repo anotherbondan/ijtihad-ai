@@ -3,8 +3,11 @@ import shutil
 import uuid
 from fastapi import APIRouter, File, UploadFile, HTTPException
 from pydantic import BaseModel, Field
-from ..tasks.halalscan_tasks import process_halal_scan
-from ..services.firebase_service import get_halal_status_by_id
+from halalscan_tasks import process_halal_scan 
+from ..scripts.firebase_service import get_halal_status_by_id
+from typing import Any
+
+process_halal_scan: Any
 
 # Define API Router
 router = APIRouter()
@@ -27,7 +30,7 @@ async def scan_halal_product(file: UploadFile = File(...)):
     and dispatches a background task to process it.
     """
     task_id = str(uuid.uuid4())
-    file_extension = os.path.splitext(file.filename)[1]
+    file_extension = os.path.splitext(file.filename or "")[1]
     file_path = f"/tmp/{task_id}{file_extension}"
     
     try:

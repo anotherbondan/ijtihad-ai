@@ -20,11 +20,11 @@ from webdriver_manager.chrome import ChromeDriverManager
 import urllib.parse
 
 # Import Celery and other services
-from backend.celery_app import app
+from celery_app import app
 from google.api_core.client_options import ClientOptions
 from google.cloud import documentai_v1 as documentai
 from google.oauth2.service_account import Credentials
-import google.generativeai as genai
+from google import genai
 import firebase_admin
 from firebase_admin import credentials, firestore
 
@@ -32,10 +32,13 @@ from firebase_admin import credentials, firestore
 try:
     # Use environment variables to get credentials
     gemini_api_key = os.getenv("GEMINI_API_KEY")
-    genai.configure(api_key=gemini_api_key)
-    llm_model = genai.GenerativeModel('gemini-2.5-flash')
+    if not gemini_api_key:
+        raise ValueError("GEMINI_API_KEY not found.")
+    client = genai.Client(api_key="API_KEY_KAMU")
     
     firebase_creds_json = os.getenv("FIREBASE_CREDENTIALS")
+    if not firebase_creds_json:
+        raise ValueError("FIREBASE_CREDENTIALS not found.")
     firebase_creds_dict = json.loads(firebase_creds_json)
     
     if not firebase_admin._apps:
@@ -63,17 +66,16 @@ try:
 
 except Exception as e:
     print(f"Error configuring Celery worker: {e}")
-    llm_model = None
     db = None
     doc_ai_client = None
 
 # --- Helper functions (Implementasi Nyata) ---
 
-def ocr_document_ai(file_path):
+def ocr_document_ai(file_path, client, processor_name):
     """
     Extracts text from an image/PDF using Google Cloud Document AI.
     """
-    if not doc_ai_client:
+    if not client:
         return ""
     
     try:
@@ -82,17 +84,17 @@ def ocr_document_ai(file_path):
         
         raw_document = documentai.RawDocument(content=content, mime_type='image/png')
         request = documentai.ProcessRequest(name=processor_name, raw_document=raw_document)
-        response = doc_ai_client.process_document(request=request)
+        response = client.process_document(request=request)
         return response.document.text
     except Exception as e:
         print(f"Error during Document AI OCR: {e}")
         return ""
-
+    
 def extract_product_name(text):
     """
     Extracts product name from OCR text using LLM for more robust results.
     """
-    if not llm_model:
+    if not client:
         return ""
     
     prompt = f"""
@@ -108,7 +110,7 @@ def extract_product_name(text):
     {text}
     """
     try:
-        response = llm_model.generate_content(prompt)
+        response = client.models.generate_content(model="gemini-2.5-flash", contents="prompt")
         return response.text
     except Exception as e:
         print(f"Error during product name extraction with LLM: {e}")
@@ -184,7 +186,7 @@ def summarize_halal_status_with_llm(product_name, bpjph_results):
     """
     Uses Gemini to analyze scraping results and determine halal status.
     """
-    if not llm_model:
+    if not client:
         return {"status": "failed", "halal_status": "Layanan AI tidak tersedia."}
 
     results_text = json.dumps(bpjph_results, indent=2)
@@ -204,7 +206,7 @@ def summarize_halal_status_with_llm(product_name, bpjph_results):
     """
     
     try:
-        response = llm_model.generate_content(prompt)
+        response = client.models.generate_content(model="gemini-2.5-flash", contents="prompt")
         return {"status": "completed", "result": response.text}
     except Exception as e:
         print(f"LLM summarization failed: {e}")
@@ -235,12 +237,12 @@ def process_halal_scan(self, file_path, task_id):
         # Step 2: Identify product name from the extracted text using LLM
         product_name_llm_response = extract_product_name(extracted_text)
         # Assuming LLM response is 'Product Name, Producer Name'
-        if "," in product_name_llm_response:
+        if product_name_llm_response is not None and "," in product_name_llm_response:
             product_name, producer_name = product_name_llm_response.split(',', 1)
             product_name = product_name.strip()
             producer_name = producer_name.strip()
         else:
-            product_name = product_name_llm_response.strip()
+            product_name = product_name_llm_response.strip() if product_name_llm_response else ""
             producer_name = ""
 
         if not product_name or "Tidak Ditemukan" in product_name:

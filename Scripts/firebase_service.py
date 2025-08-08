@@ -8,7 +8,7 @@ from sklearn.metrics.pairwise import cosine_similarity
 
 # Import UserSecretsClient only if running on Kaggle
 try:
-    from kaggle_secrets import UserSecretsClient # type: ignore
+    from kaggle_secrets import UserSecretsClient # type: ignore[import]
     ON_KAGGLE = True
 except ImportError:
     ON_KAGGLE = False

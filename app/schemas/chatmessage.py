@@ -5,8 +5,8 @@ from typing import Optional
 
 class ChatMessageBase(BaseModel):
     message: str
-    sender_type: str  # 'user' atau 'bot'
-    sender_id: Optional[UUID] = None
+    sender_type: str   
+    sender_id: Optional[UUID] = None 
 
 class ChatMessageResponse(ChatMessageBase):
     id: int

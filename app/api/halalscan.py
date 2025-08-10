@@ -1,16 +1,18 @@
 import os
 import shutil
 import uuid
+
 from fastapi import APIRouter, File, UploadFile, HTTPException
 from pydantic import BaseModel, Field
-from app.tasks.halalscan_tasks import process_halal_scan 
+
+from app.tasks.halalscan_tasks import process_halal_scan
 from app.services.firebase_service import get_halal_status_by_id
 from typing import Any
 
-process_halal_scan: Any
-
 # Define API Router
 router = APIRouter()
+
+process_halal_scan: Any
 
 # Define Data Models
 class HalalScanResponse(BaseModel):
@@ -30,13 +32,21 @@ async def scan_halal_product(file: UploadFile = File(...)):
     and dispatches a background task to process it.
     """
     task_id = str(uuid.uuid4())
-    file_extension = os.path.splitext(file.filename or "")[1]
-    file_path = f"/tmp/{task_id}{file_extension}"
-    
+    UPLOAD_DIR = os.path.join(os.getcwd(), "uploads")
+    os.makedirs(UPLOAD_DIR, exist_ok=True)
+
+    file_path = os.path.join(UPLOAD_DIR, f"{uuid.uuid4()}.jpeg")
+
     try:
-        with open(file_path, "wb") as f:
-            shutil.copyfileobj(file.file, f)
+        # simpan file
+        with open(file_path, "wb") as buffer:
+            buffer.write(await file.read())
+
+        # Ensure Celery task can be called
+        if 'delay' not in dir(process_halal_scan):
+            raise RuntimeError("Celery task 'process_halal_scan' is not properly configured. Is Redis/Celery running?")
             
+        # Dispatch the long-running task to Celery
         process_halal_scan.delay(file_path, task_id)
         
         return HalalScanResponse(
@@ -45,11 +55,12 @@ async def scan_halal_product(file: UploadFile = File(...)):
             message="Permintaan pemindaian diterima. Status dapat dicek secara berkala."
         )
     except Exception as e:
+        # Clean up the temporary file if an error occurred
         if os.path.exists(file_path):
             os.remove(file_path)
         raise HTTPException(status_code=500, detail=f"Terjadi kesalahan saat memproses permintaan: {e}")
 
-@router.get("/status/{task_id}")
+@router.get("/{task_id}")
 async def get_scan_status(task_id: str):
     """
     Endpoint to check the status of a HalalScan task.

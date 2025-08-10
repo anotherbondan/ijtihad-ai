@@ -28,9 +28,8 @@ from google import genai
 import firebase_admin
 from firebase_admin import credentials, firestore
 
-# --- Konfigurasi Kredensial (untuk lingkungan background worker) ---
+# --- Konfigurasi Kredensial (diasumsikan sudah di-set di environment) ---
 try:
-    # Use environment variables to get credentials
     gemini_api_key = os.getenv("GEMINI_API_KEY")
     if not gemini_api_key:
         raise ValueError("GEMINI_API_KEY not found.")
@@ -62,46 +61,46 @@ try:
     )
     processor_name = f"projects/{PROJECT_ID}/locations/{LOCATION}/processors/{PROCESSOR_ID}"
     
-    print("All services configured for Celery task.")
+    print("All services configured for HalalScan Celery task.")
 
 except Exception as e:
     print(f"Error configuring Celery worker: {e}")
+    client = None
     db = None
     doc_ai_client = None
 
-# --- Helper functions (Implementasi Nyata) ---
+# --- Helper functions ---
 
-def ocr_document_ai(file_path, client, processor_name):
+def ocr_from_file(file_path, mime_type='image/png'):
     """
     Extracts text from an image/PDF using Google Cloud Document AI.
     """
-    if not client:
+    if not doc_ai_client:
         return ""
     
     try:
-        with open(file_path, "rb") as image_file:
-            content = image_file.read()
+        with open(file_path, "rb") as document_file:
+            content = document_file.read()
         
-        raw_document = documentai.RawDocument(content=content, mime_type='image/png')
+        raw_document = documentai.RawDocument(content=content, mime_type=mime_type)
         request = documentai.ProcessRequest(name=processor_name, raw_document=raw_document)
-        response = client.process_document(request=request)
+        response = doc_ai_client.process_document(request=request)
         return response.document.text
     except Exception as e:
         print(f"Error during Document AI OCR: {e}")
         return ""
     
-def extract_product_name(text):
+def extract_product_info_from_text(text):
     """
-    Extracts product name from OCR text using LLM for more robust results.
+    Extracts product name and producer from OCR text using LLM.
     """
     if not client:
-        return ""
+        return "", ""
     
     prompt = f"""
-    Anda adalah asisten AI yang ahli dalam mengekstrak nama produk dari teks label.
-    Tugas Anda adalah membaca teks di bawah dan mengidentifikasi NAMA PRODUK dan PELAKU USAHA.
-    Teks ini diambil dari label kemasan produk. Berikan hanya NAMA PRODUK yang paling mungkin dan PELAKU USAHA yang tertera, dipisahkan oleh koma.
-    Jika tidak ditemukan, berikan 'Tidak Ditemukan'.
+    Anda adalah asisten AI yang ahli dalam mengekstrak NAMA PRODUK dan NAMA PELAKU USAHA dari teks.
+    Teks ini berasal dari label kemasan produk. Identifikasi dan berikan hanya NAMA PRODUK dan NAMA PELAKU USAHA.
+    Pisahkan keduanya dengan koma. Jika salah satu tidak ditemukan, tulis 'Tidak Ditemukan'.
 
     Contoh output:
     Sari Roti Roti Tawar Gandum, PT. Indoroti Prima Citarasa
@@ -111,40 +110,39 @@ def extract_product_name(text):
     """
     try:
         response = client.models.generate_content(model="gemini-2.5-flash", contents=prompt)
-        return response.text
+        response_text = getattr(response, "text", None)
+        if response_text is None:
+            print("Error: LLM response text is None.")
+            return "", ""
+        parts = response_text.strip().split(',', 1)
+        product_name = parts[0].strip()
+        producer_name = parts[1].strip() if len(parts) > 1 else ""
+        return product_name, producer_name
     except Exception as e:
-        print(f"Error during product name extraction with LLM: {e}")
-        return ""
+        print(f"Error during product info extraction with LLM: {e}")
+        return "", ""
 
 def scrape_bpjph_halal(product_name, pelaku_usaha):
     """
-    Melakukan pencarian di situs BPJPH (berdasarkan nama produk dan pelaku usaha)
-    dan menggabungkan hasilnya ke dalam satu daftar.
+    Melakukan pencarian di situs BPJPH dan menggabungkan hasilnya.
     """
     url_base = "https://bpjph.halal.go.id/search/sertifikat"
     combined_results = {}
-
+    
     try:
         options = ChromeOptions()
         options.add_argument("--headless")
         options.add_argument("--no-sandbox")
         options.add_argument("--disable-dev-shm-usage")
         driver = webdriver.Chrome(service=ChromeService(ChromeDriverManager().install()), options=options)
-        
         wait = WebDriverWait(driver, 10)
 
-        # --- Fungsi pembantu untuk melakukan satu kali pencarian ---
-        def perform_search_and_scrape(search_url):
+        def perform_search(search_url):
             driver.get(search_url)
-            
             try:
-                # Tunggu sampai baris tabel muncul
                 wait.until(EC.presence_of_element_located((By.CSS_SELECTOR, "table tbody tr")))
-                
-                # Jika tabel ditemukan, scrape datanya
                 soup = BeautifulSoup(driver.page_source, "html.parser")
                 rows = soup.select("table tbody tr")
-                
                 for row in rows:
                     cells = row.find_all("td")
                     if len(cells) >= 4:
@@ -154,134 +152,139 @@ def scrape_bpjph_halal(product_name, pelaku_usaha):
                             "nomor_sertifikat": cells[2].get_text(strip=True),
                             "tanggal_terbit": cells[3].get_text(strip=True),
                         }
-                        # Menggunakan nomor sertifikat sebagai kunci untuk menghindari duplikasi
                         if item["nomor_sertifikat"]:
                             combined_results[item["nomor_sertifikat"]] = item
             except TimeoutException:
-                print(f"Pencarian tidak menemukan hasil dalam 10 detik.")
-                # Lanjutkan ke pencarian berikutnya jika timeout
+                print(f"Pencarian di {search_url} tidak menemukan hasil.")
 
-        # --- Jalankan pencarian pertama: Nama Produk ---
-        if product_name:
+        if product_name and product_name != 'Tidak Ditemukan':
             print(f"Mencari berdasarkan Nama Produk: '{product_name}'...")
             url_produk = f"{url_base}?nama_produk={urllib.parse.quote(product_name)}"
-            perform_search_and_scrape(url_produk)
+            perform_search(url_produk)
             
-        # --- Jalankan pencarian kedua: Nama Pelaku Usaha ---
         if pelaku_usaha:
-            print(f"\nMencari berdasarkan Nama Pelaku Usaha: '{pelaku_usaha}'...")
+            print(f"Mencari berdasarkan Nama Pelaku Usaha: '{pelaku_usaha}'...")
             url_pelaku_usaha = f"{url_base}?nama_pelaku_usaha={urllib.parse.quote(pelaku_usaha)}"
-            perform_search_and_scrape(url_pelaku_usaha)
+            perform_search(url_pelaku_usaha)
 
         driver.quit()
-        
     except Exception as e:
-        print(f"Terjadi error saat menjalankan scraping: {e}")
-        return []
-
+        print(f"Terjadi error saat scraping BPJPH: {e}")
+    
     return list(combined_results.values())
 
 
 def summarize_halal_status_with_llm(product_name, bpjph_results):
     """
-    Uses Gemini to analyze scraping results and determine halal status.
+    Menganalisis hasil scraping dan memberikan ringkasan status halal.
     """
     if not client:
-        return {"status": "failed", "halal_status": "Layanan AI tidak tersedia."}
+        return {"status": "failed", "summary": "Layanan AI tidak tersedia."}
 
-    results_text = json.dumps(bpjph_results, indent=2)
+    results_text = json.dumps(bpjph_results, indent=2, ensure_ascii=False)
     prompt = f"""
-    Anda adalah asisten AI yang ahli dalam menyimpulkan status halal produk.
-    Berdasarkan hasil pencarian sertifikasi BPJPH berikut, tentukan apakah produk dengan nama '{product_name}' bersertifikat halal.
-    Tinjau setiap entri, dan berikan kesimpulan akhir yang jelas.
-
-    Hasil Pencarian BPJPH:
+    Anda adalah seorang ahli sertifikasi halal. Tugas Anda adalah menganalisis data dari BPJPH untuk produk bernama '{product_name}'.
+    
+    Data dari BPJPH:
     {results_text}
 
-    Kesimpulan:
-    1. Status Halal: [HALAL/TIDAK HALAL/BELUM TERDAFTAR]
-    2. Nama Produk Tervalidasi: [Nama Produk di BPJPH, jika ada]
-    3. Nomor Sertifikat: [Nomor Sertifikat, jika ada]
-    4. Pesan: [Berikan ringkasan singkat yang ramah pengguna.]
+    Berdasarkan data di atas, berikan analisis dalam format JSON dengan struktur berikut:
+    {{
+      "status": "kesimpulan_status",
+      "validated_product_name": "nama_produk_yang_paling_cocok",
+      "certificate_number": "nomor_sertifikat_terkait",
+      "producer": "nama_produsen_terkait",
+      "summary_message": "Ringkasan singkat dan ramah untuk pengguna."
+    }}
+
+    Nilai untuk "kesimpulan_status" harus salah satu dari: "TERDAFTAR_HALAL", "TIDAK_DITEMUKAN", atau "MEMERLUKAN_VERIFIKASI_LANJUTAN".
+    Jika ada kecocokan yang kuat, gunakan "TERDAFTAR_HALAL".
+    Jika tidak ada data sama sekali atau datanya sangat tidak relevan, gunakan "TIDAK_DITEMUKAN".
+    Jika ada beberapa entri yang mirip tetapi tidak ada yang pasti, gunakan "MEMERLUKAN_VERIFIKASI_LANJUTAN".
+    Isi field lainnya sesuai dengan entri yang paling relevan.
     """
-    
     try:
         response = client.models.generate_content(model="gemini-2.5-flash", contents=prompt)
-        return {"status": "completed", "result": response.text}
+        # Membersihkan output LLM agar menjadi JSON yang valid
+        response_text = getattr(response, "text", None)
+        if response_text is None:
+            print("Error: LLM response text is None.")
+            return {"status": "failed", "summary_message": "Analisis AI gagal."}
+        cleaned_text = response_text.strip().replace("```json", "").replace("```", "")
+        return json.loads(cleaned_text)
     except Exception as e:
         print(f"LLM summarization failed: {e}")
-        return {"status": "failed", "halal_status": "Kesimpulan AI gagal."}
+        return {"status": "failed", "summary_message": "Analisis AI gagal."}
 
 
-# --- Celery Task ---
+# --- Celery Task (MODIFIED) ---
 @app.task(bind=True)
-def process_halal_scan(self, file_path, task_id):
+def process_halal_scan(self, task_id, file_path=None, input_text=None):
     """
-    Handles the entire HalalScan process: OCR, scraping, LLM analysis, and storage.
+    Handles the HalalScan process from either an uploaded file (OCR) or direct text input.
     """
-    halal_status = {
+    result_to_store = {
         "status": "failed",
-        "product_name": "Tidak Ditemukan",
-        "producer_name": "Tidak Ditemukan",
-        "halal_status": "Tidak Ditemukan",
-        "message": "Terjadi kesalahan saat memproses dokumen."
+        "product_name": "N/A",
+        "summary_message": "Terjadi kesalahan saat memulai proses.",
+        "timestamp": datetime.now().isoformat()
     }
 
     try:
-        # Step 1: OCR the uploaded image using Document AI
-        extracted_text = ocr_document_ai(file_path, doc_ai_client, processor_name)
-        if not extracted_text:
-            halal_status["message"] = "Gagal mengekstrak teks dari gambar."
-            raise Exception("OCR failed.")
+        product_name = ""
+        producer_name = ""
 
-        # Step 2: Identify product name from the extracted text using LLM
-        product_name_llm_response = extract_product_name(extracted_text)
-        # Assuming LLM response is 'Product Name, Producer Name'
-        if product_name_llm_response is not None and "," in product_name_llm_response:
-            product_name, producer_name = product_name_llm_response.split(',', 1)
-            product_name = product_name.strip()
-            producer_name = producer_name.strip()
+        # MODIFIKASI: Logika untuk memproses input berdasarkan jenisnya
+        if file_path:
+            print(f"Task {task_id}: Memproses file {file_path}...")
+            extracted_text = ocr_from_file(file_path)
+            if not extracted_text:
+                result_to_store["summary_message"] = "Gagal mengekstrak teks dari gambar."
+                raise Exception("OCR failed.")
+            
+            product_name, producer_name = extract_product_info_from_text(extracted_text)
+
+        elif input_text:
+            print(f"Task {task_id}: Memproses teks '{input_text}'...")
+            # Jika hanya nama produk yang diberikan, produsen bisa dikosongkan
+            product_name = input_text
+            producer_name = "" # Atau bisa diekstrak jika formatnya "produk, produsen"
+
         else:
-            product_name = product_name_llm_response.strip() if product_name_llm_response else ""
-            producer_name = ""
+            result_to_store["summary_message"] = "Tidak ada input yang diberikan (file atau teks)."
+            raise ValueError("No input provided.")
 
         if not product_name or "Tidak Ditemukan" in product_name:
-            halal_status["message"] = "Nama produk tidak dapat diidentifikasi."
+            result_to_store["summary_message"] = "Nama produk tidak dapat diidentifikasi dari input."
             raise Exception("Product name extraction failed.")
 
-        # Step 3: Scrape BPJPH for the product
+        result_to_store["product_name"] = product_name
+
+        # Langkah 2: Scrape BPJPH
         bpjph_results = scrape_bpjph_halal(product_name, producer_name)
 
-        # Step 4: Use LLM to summarize and determine the halal status
-        if bpjph_results:
-            halal_status_result = summarize_halal_status_with_llm(product_name, bpjph_results)
-            
-            # This is a basic example; parsing LLM output to JSON is a future step
-            halal_status["halal_status"] = "Halal" if "HALAL" in halal_status_result['result'] else "Tidak Halal"
-            halal_status["message"] = "Verifikasi berhasil. Silakan periksa detailnya."
-        else:
-            halal_status["halal_status"] = "Belum Terdaftar"
-            halal_status["message"] = "Tidak ada produk yang relevan ditemukan di BPJPH."
+        # Langkah 3: Gunakan LLM untuk menyimpulkan status
+        summary_result = summarize_halal_status_with_llm(product_name, bpjph_results)
         
-        halal_status["product_name"] = product_name
-        halal_status["producer_name"] = producer_name
-        halal_status["timestamp"] = datetime.now().isoformat()
+        # Gabungkan hasil ringkasan ke dalam hasil akhir
+        result_to_store.update(summary_result)
+        result_to_store["status"] = "completed" # Menandakan proses celery selesai
 
-        # Step 5: Store the final result in Firestore
+    except Exception as e:
+        print(f"Task {task_id} failed: {e}")
+        # Pesan error sudah diatur di dalam blok try
+        
+    finally:
+        # Simpan hasil akhir (sukses atau gagal) ke Firestore
         if db:
-            doc_ref = db.collection('halal_status_cache').document(task_id)
-            doc_ref.set(halal_status)
+            doc_ref = db.collection('halal_scan_results').document(task_id)
+            doc_ref.set(result_to_store)
         else:
             print("Firestore client not available. Cannot save results.")
             
-    except Exception as e:
-        print(f"HalalScan task failed with error: {e}")
-        # Store a failure status in Firestore
-        if db:
-            doc_ref = db.collection('halal_status_cache').document(task_id)
-            doc_ref.set(halal_status)
-    finally:
-        # Clean up the temporary file
-        if os.path.exists(file_path):
+        # Hapus file temporer jika ada
+        if file_path and os.path.exists(file_path):
             os.remove(file_path)
+        
+        print(f"Task {task_id} finished with status: {result_to_store.get('status')}")
 

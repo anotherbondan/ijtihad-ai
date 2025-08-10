@@ -7,7 +7,7 @@ class RoomChatBase(BaseModel):
 
 class RoomChatResponse(RoomChatBase):
     id: UUID
-    owner_id: UUID
+    owner_id: UUID           
     created_at: datetime
 
     class Config:

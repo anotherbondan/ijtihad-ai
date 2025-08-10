@@ -7,9 +7,8 @@ import os
 import numpy as np
 from sklearn.metrics.pairwise import cosine_similarity
 
-# Import UserSecretsClient only if running on Kaggle
 try:
-    from kaggle_secrets import UserSecretsClient # type: ignore[import]
+    from kaggle_secrets import UserSecretsClient # type: ignore
     ON_KAGGLE = True
 except ImportError:
     ON_KAGGLE = False
@@ -49,6 +48,7 @@ db = firestore.client()
 FATWA_COLLECTION_NAME = 'fatwa_embeddings_fixed_final'
 fatwa_collection = db.collection(FATWA_COLLECTION_NAME)
 halal_status_cache = db.collection('halal_status_cache')
+contract_analysis_cache = db.collection('contract_analysis_cache')
 
 # --- RAG Search Function ---
 async def search_fatwa_embeddings(query_embedding: list, limit: int = 5) -> list:
@@ -125,3 +125,30 @@ async def get_halal_status_by_id(task_id: str):
         print(f"Error retrieving halal status from Firestore for task {task_id}: {e}")
         return None
 
+# --- Contract Analysis Cache Functions ---
+async def save_contract_analysis(task_id: str, analysis_data: dict):
+    """
+    Saves the contract analysis result to a Firestore cache collection.
+    """
+    try:
+        doc_ref = contract_analysis_cache.document(task_id)
+        await asyncio.to_thread(doc_ref.set, analysis_data)
+        return True
+    except Exception as e:
+        print(f"Error saving contract analysis result to Firestore for task {task_id}: {e}")
+        return False
+
+async def get_contract_analysis_by_id(task_id: str):
+    """
+    Retrieves the contract analysis result from Firestore cache by task ID.
+    """
+    try:
+        def sync_get():
+            doc_ref = contract_analysis_cache.document(task_id)
+            doc = doc_ref.get()
+            return doc.to_dict() if doc.exists else None
+
+        return await asyncio.to_thread(sync_get)
+    except Exception as e:
+        print(f"Error retrieving contract analysis result from Firestore for task {task_id}: {e}")
+        return None

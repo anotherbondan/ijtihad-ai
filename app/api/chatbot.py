@@ -1,8 +1,12 @@
 from app.services.embedding_service import get_query_embedding
 from app.services.firebase_service import search_fatwa_embeddings
 from app.services.llm_service import generate_response_from_context
+from app.crud.roomchat import get_rooms_by_owner
+from app.schemas.roomchat import RoomChatResponse
 from pydantic import BaseModel
-from fastapi import APIRouter, HTTPException
+from fastapi import APIRouter, HTTPException 
+from typing import List
+from uuid import UUID
 
 router = APIRouter()
 

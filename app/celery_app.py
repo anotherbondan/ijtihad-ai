@@ -10,12 +10,12 @@ REDIS_URL = os.getenv("REDIS_URL", "redis://localhost:6379/0")
 
 # Menginisialisasi Celery app
 # Parameter pertama ('backend') adalah nama modul utama aplikasi.
-app = Celery('backend', broker=REDIS_URL, backend=REDIS_URL)
+app = Celery('ijtihad', broker=REDIS_URL, backend=REDIS_URL, include=['app.tasks.halalscan_tasks', 'app.tasks.ghararmaysir_tasks'])
 
 # Mengatur Celery untuk menemukan tugas di dalam paket 'backend.tasks'
 # Ini memungkinkan Celery untuk secara otomatis menemukan fungsi
 # yang dihiasi dengan @app.task di dalam folder tasks/.
-app.autodiscover_tasks(['backend.tasks'])
+app.autodiscover_tasks(['app.tasks'])
 
 # Mengatur konfigurasi tambahan
 app.conf.update(

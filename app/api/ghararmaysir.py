@@ -41,7 +41,7 @@ async def analyze_document_syariah(file: UploadFile = File(...)):
     UPLOAD_DIR = os.path.join(os.getcwd(), "docs")
     os.makedirs(UPLOAD_DIR, exist_ok=True)
 
-    file_path = os.path.join(UPLOAD_DIR, f"{uuid.uuid4()}.pdf")
+    file_path = os.path.join(UPLOAD_DIR, f"{task_id}.pdf")
 
     try:
         # simpan file
@@ -53,8 +53,8 @@ async def analyze_document_syariah(file: UploadFile = File(...)):
             raise RuntimeError("Celery task 'process_halal_scan' is not properly configured. Is Redis/Celery running?")
             
         # Dispatch the long-running task to Celery
-        process_contract_analysis.delay(file_path, task_id)
-        
+        process_contract_analysis.delay(task_id, file_path)
+
         return ContractAnalysisResponse(
             task_id=task_id, 
             status="processing", 

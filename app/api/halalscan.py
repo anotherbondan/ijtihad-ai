@@ -35,7 +35,7 @@ async def scan_halal_product(file: UploadFile = File(...)):
     UPLOAD_DIR = os.path.join(os.getcwd(), "uploads")
     os.makedirs(UPLOAD_DIR, exist_ok=True)
 
-    file_path = os.path.join(UPLOAD_DIR, f"{uuid.uuid4()}.jpeg")
+    file_path = os.path.join(UPLOAD_DIR, f"{task_id}.jpeg")
 
     try:
         # simpan file
@@ -47,7 +47,7 @@ async def scan_halal_product(file: UploadFile = File(...)):
             raise RuntimeError("Celery task 'process_halal_scan' is not properly configured. Is Redis/Celery running?")
             
         # Dispatch the long-running task to Celery
-        process_halal_scan.delay(file_path, task_id)
+        process_halal_scan.delay(task_id, file_path)
         
         return HalalScanResponse(
             task_id=task_id, 

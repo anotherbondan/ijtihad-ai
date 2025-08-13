@@ -16,9 +16,6 @@ ENV/
 *.env
 firebase_creds.json
 
-# Ignore all sensitive credentials
-/credentials/
-
 # VSCode settings (optional, if you use VSCode)
 .vscode/
 

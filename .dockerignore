@@ -1,0 +1,35 @@
+# Python cache & build
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+*.so
+
+# Virtual environment
+env/
+.venv/
+venv/
+ENV/
+
+# Logs & cache
+*.log
+mypy_cache/
+pytest_cache/
+.ipynb_checkpoints/
+
+# Local uploads / static large files
+uploads/
+docs/
+migrations/
+
+# Environment variables & credentials
+.env
+*.env
+firebase_creds.json
+
+# Git
+.git
+.gitignore
+
+# VSCode settings
+.vscode/

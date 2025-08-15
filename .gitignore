@@ -18,6 +18,3 @@ firebase_creds.json
 
 # VSCode settings (optional, if you use VSCode)
 .vscode/
-
-# Jupyter Notebook checkpoints (if any)
-.ipynb_checkpoints/

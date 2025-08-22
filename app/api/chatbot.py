@@ -1,6 +1,6 @@
 from app.services.embedding_service import get_query_embedding
 from app.services.firebase_service import search_fatwa_embeddings
-from app.services.llm_service import generate_response_from_context
+from app.services.llm_service import generate_response_from_context, generate_response_with_search
 from app.crud.roomchat import get_rooms_by_owner
 from app.schemas.roomchat import RoomChatResponse
 from pydantic import BaseModel
@@ -21,11 +21,7 @@ async def ask_chatbot(request: ChatRequest):
     try:
         user_message = request.message
 
-        embedding_vector = get_query_embedding(user_message)
-
-        relevant_fatwa = await search_fatwa_embeddings(embedding_vector)
-
-        llm_response = await generate_response_from_context(user_message, relevant_fatwa)
+        llm_response = await generate_response_with_search(user_message)
 
         return ChatResponse(response=llm_response)
 

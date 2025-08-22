@@ -2,7 +2,7 @@ import os
 import shutil
 import uuid
 
-from fastapi import APIRouter, File, UploadFile, HTTPException
+from fastapi import APIRouter,File, UploadFile, Query, HTTPException
 from pydantic import BaseModel, Field
 
 from app.tasks.halalscan_tasks import process_halal_scan
@@ -26,11 +26,15 @@ class HalalScanStatus(BaseModel):
 
 # API Endpoint
 @router.post("/", response_model=HalalScanResponse)
-async def scan_halal_product(file: UploadFile = File(...)):
+async def scan_halal_product(input: str = Query(..., regex="^(text|file)$", description="Jenis input: 'text' atau 'file'"),
+    file: UploadFile = File(None),
+    text: str = Query(None)):
     """
     Endpoint for HalalScan feature. Receives an image file, saves it,
     and dispatches a background task to process it.
     """
+    
+    
     task_id = str(uuid.uuid4())
     UPLOAD_DIR = os.path.join(os.getcwd(), "uploads")
     os.makedirs(UPLOAD_DIR, exist_ok=True)
@@ -38,16 +42,20 @@ async def scan_halal_product(file: UploadFile = File(...)):
     file_path = os.path.join(UPLOAD_DIR, f"{task_id}.jpeg")
 
     try:
+        if input == "file":
         # simpan file
-        with open(file_path, "wb") as buffer:
-            buffer.write(await file.read())
+            with open(file_path, "wb") as buffer:
+                buffer.write(await file.read())
 
-        # Ensure Celery task can be called
-        if 'delay' not in dir(process_halal_scan):
-            raise RuntimeError("Celery task 'process_halal_scan' is not properly configured. Is Redis/Celery running?")
-            
-        # Dispatch the long-running task to Celery
-        process_halal_scan.delay(task_id, file_path)
+            # Ensure Celery task can be called
+            if 'delay' not in dir(process_halal_scan):
+                raise RuntimeError("Celery task 'process_halal_scan' is not properly configured. Is Redis/Celery running?")
+                
+            # Dispatch the long-running task to Celery
+            process_halal_scan.delay(task_id, file_path=file_path)
+        
+        elif input == "text":
+            process_halal_scan.delay(task_id, input_text=text)
         
         return HalalScanResponse(
             task_id=task_id, 

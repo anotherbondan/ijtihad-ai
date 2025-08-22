@@ -3,12 +3,15 @@ from fastapi.middleware.cors import CORSMiddleware
 from app.api import ghararmaysir, halalscan, chatbot, chatmessage, user, roomchat
 from tortoise.contrib.fastapi import register_tortoise
 from app.db_config import TORTOISE_ORM
+import os
 
 app = FastAPI()
 
+origins =  os.getenv("ALLOWED_ORIGINS", "https://ijtihad.vercel.app").split(",")
+
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],
+    allow_origins=origins,
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],

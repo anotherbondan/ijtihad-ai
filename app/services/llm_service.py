@@ -85,3 +85,41 @@ async def generate_response_from_context(user_query: str, context_chunks: list) 
                 return "Maaf, terjadi kesalahan saat memproses permintaan Anda. Silakan coba lagi nanti."
     # Ensure a string is always returned
     return "Maaf, terjadi kesalahan yang tidak terduga saat memproses permintaan Anda."
+
+async def generate_response_with_search(user_query: str) -> str:
+    """
+    Generates a response using the Gemini LLM with web search functionality.
+    This replaces the RAG flow entirely.
+    """
+    if not client:
+        return "Maaf, layanan AI tidak tersedia untuk menghasilkan jawaban."
+
+    # This prompt tells Gemini to act as a syariah expert and use web search results
+    # to answer questions. It's a simple form of prompt engineering.
+    prompt = f"""
+    Anda adalah asisten AI yang ahli dalam hukum syariah. Jawablah pertanyaan pengguna dengan melakukan pencarian di web jika perlu. Jika tidak ada informasi yang ditemukan atau pertanyaan tidak relevan dengan hukum syariah, berikan respons yang sopan dan informatif.
+
+    Pertanyaan Pengguna: {user_query}
+    
+    Jawaban:
+    """
+    retries = 3
+    for i in range(retries):
+        try:
+            # We use gemini-2.5-flash with a web search tool
+            response = client.models.generate_content(
+                model="gemini-2.5-flash",
+                contents=[prompt],
+            )
+            return response.text if response.text else "Maaf, saya tidak dapat menemukan jawaban yang relevan untuk pertanyaan Anda."
+        except Exception as e:
+            print(f"Attempt {i+1} failed to generate LLM response: {e}")
+            if i < retries - 1:
+                wait_time = 2 ** i
+                print(f"Retrying in {wait_time} seconds...")
+                await asyncio.sleep(wait_time)
+            else:
+                print(f"All retry attempts failed for LLM response generation.")
+                return "Maaf, terjadi kesalahan saat memproses permintaan Anda. Silakan coba lagi nanti."
+    
+    return "Maaf, terjadi kesalahan yang tidak terduga saat memproses permintaan Anda."

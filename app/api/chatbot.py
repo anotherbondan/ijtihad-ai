@@ -1,5 +1,3 @@
-from app.services.embedding_service import get_query_embedding
-from app.services.firebase_service import search_fatwa_embeddings
 from app.services.llm_service import generate_response_from_context, generate_response_with_search
 from app.crud.roomchat import get_rooms_by_owner
 from app.schemas.roomchat import RoomChatResponse

@@ -4,8 +4,11 @@ from app.api import  chatbot, chatmessage, user, roomchat
 from tortoise.contrib.fastapi import register_tortoise
 from app.db_config import TORTOISE_ORM
 import os
+from dotenv import load_dotenv
 
 app = FastAPI()
+
+load_dotenv()
 
 origins =  os.getenv("ALLOWED_ORIGINS", "https://ijtihad.vercel.app").split(",")
 
